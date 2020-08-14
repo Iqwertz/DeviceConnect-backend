@@ -2,6 +2,7 @@ import { SessionEnviroment } from "./session-class";
 import * as express from "express";
 import { createServer } from "http";
 import * as socketio from "socket.io";
+import { enviroment } from "./enviroment";
 
 const sessionsStore = new Map<string, SessionEnviroment>();
 var cors = require("cors");
@@ -40,10 +41,13 @@ app.post("/new", (req, res) => {
     socket.join(newId);
     console.log("Connected");
 
-    io.in(socket.id).emit("chat message", "successfully connected to " + newId);
+    io.in(socket.id).emit(
+      enviroment.messageIdentifier,
+      "successfully connected to " + newId
+    );
     sessionEnviroment.registerUser(socket.id);
 
-    socket.on("chat message", (msg) => {
+    socket.on(enviroment.messageIdentifier, (msg) => {
       sessionEnviroment.sendChatMessage(msg);
     });
 
@@ -53,6 +57,14 @@ app.post("/new", (req, res) => {
     });
   });
   res.json({ sessionId: newId });
+});
+
+app.get("/session/:id", (req, res) => {
+  if (sessionsStore.has(req.params.id)) {
+    res.json();
+  } else {
+    res.sendStatus(404);
+  }
 });
 
 http.listen(3000, () => {

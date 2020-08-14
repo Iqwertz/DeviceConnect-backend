@@ -1,1 +1,5 @@
-POST http://localhost:3000/new
+//POST http://localhost:3000/new
+
+//POST http://localhost:3000/session/1X57
+
+GET http://localhost:3000/session/9PD
