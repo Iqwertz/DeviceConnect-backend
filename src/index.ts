@@ -4,7 +4,10 @@ import { createServer } from "http";
 import * as socketio from "socket.io";
 import { enviroment } from "./enviroment";
 
-const sessionsStore = new Map<string, SessionEnviroment>();
+const sessionsStore: Map<string, SessionEnviroment> = new Map<
+  string,
+  SessionEnviroment
+>();
 var cors = require("cors");
 const app = express();
 const http = createServer(app);
@@ -14,7 +17,10 @@ app.use(cors());
   res.sendFile(__dirname + "/index.html");
 });*/
 
-let id: number = 1000;
+//////this function gets called from the sessionEnviroment class to remove itself from the store / I dont think this is the cleanest way....
+export function removeSessionById(id: string) {
+  sessionsStore.delete(id);
+}
 
 function getNewSessionId(digits: number) {
   let generatedId: string = getRandomId(4, true, true, false);
@@ -52,7 +58,7 @@ app.post("/new", (req, res) => {
     });
 
     socket.on("disconnect", () => {
-      sessionEnviroment.disconnectUser();
+      sessionEnviroment.disconnectUser(socket.id);
       console.log("user disconnected");
     });
   });
