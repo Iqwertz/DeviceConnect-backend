@@ -7,10 +7,14 @@ export interface ChatData {
 }
 
 export interface ChatMessage {
-  userId?: number;
-  date?: Date;
   message: string;
   messageId: number;
+  userId: string;
+  date?: Date;
+}
+
+export interface SessionInitData {
+  userId: string;
 }
 
 export interface UserData {
@@ -24,6 +28,7 @@ export class SessionEnviroment {
   userDataArray: Map<string, UserData> = new Map<string, UserData>();
   io: SocketIO.Socket;
   private destroyTimeout;
+  messageIdCounter: number = 0;
 
   constructor(newId: string, newSocket: any) {
     this.id = newId;
@@ -34,25 +39,37 @@ export class SessionEnviroment {
     };
   }
 
-  sendChatMessage(message: string) {
-    console.log(message);
+  sendChatMessage(message: string, senderId: string) {
     const chatMessage: ChatMessage = {
       message: message,
-      messageId: 404,
+      messageId: this.messageIdCounter++,
+      userId: senderId,
     };
     this.chatData.chatMessages.push(chatMessage);
-    this.io.in(this.id).emit(enviroment.messageIdentifier, message);
+    this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
+  }
+
+  sendServerMessage(message: string, senderId: string) {
+    const chatMessage: ChatMessage = {
+      message: message,
+      messageId: this.messageIdCounter++,
+      userId: "SERVER",
+    };
+    this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
   }
 
   registerUser(uId: string) {
     const userData: UserData = {
       userId: uId,
     };
-    console.log(uId);
     this.userDataArray.set(uId, userData);
 
+    const sessionInitData: SessionInitData = {
+      userId: uId,
+    };
+    this.io.in(uId).emit("SessionIni", sessionInitData);
     for (const msg of this.chatData.chatMessages) {
-      this.io.in(uId).emit(enviroment.messageIdentifier, msg.message);
+      this.io.in(uId).emit(enviroment.messageIdentifier, msg);
     }
 
     clearTimeout(this.destroyTimeout);

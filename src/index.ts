@@ -40,21 +40,20 @@ app.post("/new", (req, res) => {
 
   const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io);
   sessionsStore.set(newId, sessionEnviroment);
-  console.log(sessionsStore);
   console.log("New Session generated");
 
   io.on("connection", (socket) => {
     socket.join(newId);
     console.log("Connected");
 
-    io.in(socket.id).emit(
-      enviroment.messageIdentifier,
-      "successfully connected to " + newId
+    sessionEnviroment.sendServerMessage(
+      "successfully connected to " + newId,
+      socket.id
     );
     sessionEnviroment.registerUser(socket.id);
 
     socket.on(enviroment.messageIdentifier, (msg) => {
-      sessionEnviroment.sendChatMessage(msg);
+      sessionEnviroment.sendChatMessage(msg, socket.id);
     });
 
     socket.on("disconnect", () => {
