@@ -15,6 +15,7 @@ export interface ChatMessage {
 
 export interface SessionInitData {
   userId: string;
+  sessionId: string;
 }
 
 export interface UserData {
@@ -66,6 +67,7 @@ export class SessionEnviroment {
 
     const sessionInitData: SessionInitData = {
       userId: uId,
+      sessionId: this.id,
     };
     this.io.in(uId).emit("SessionIni", sessionInitData);
     for (const msg of this.chatData.chatMessages) {
