@@ -16,10 +16,11 @@ export interface ChatMessage {
 export interface SessionInitData {
   userId: string;
   sessionId: string;
+  userName: string;
 }
 
 export interface UserData {
-  userName?: string;
+  userName: string;
   userId: string;
 }
 
@@ -29,6 +30,7 @@ export class SessionEnviroment {
   userDataArray: Map<string, UserData> = new Map<string, UserData>();
   io: SocketIO.Socket;
   private destroyTimeout;
+  private availableAnimalNames: string[] = enviroment.animalNames;
   messageIdCounter: number = 0;
 
   constructor(newId: string, newSocket: any) {
@@ -60,13 +62,16 @@ export class SessionEnviroment {
   }
 
   registerUser(uId: string) {
+    const uName: string = this.generateUsername();
     const userData: UserData = {
       userId: uId,
+      userName: uName,
     };
     this.userDataArray.set(uId, userData);
 
     const sessionInitData: SessionInitData = {
       userId: uId,
+      userName: uName,
       sessionId: this.id,
     };
     this.io.in(uId).emit("SessionIni", sessionInitData);
@@ -91,6 +96,16 @@ export class SessionEnviroment {
         this.destroy();
       }, enviroment.destroySessionDelay);
     }
+  }
+
+  private generateUsername(): string {
+    let generatedName: string = this.availableAnimalNames[
+      Math.floor(Math.random() * this.availableAnimalNames.length)
+    ];
+    this.availableAnimalNames = this.availableAnimalNames.filter(
+      (item) => item != generatedName
+    );
+    return generatedName;
   }
 
   destroy() {
