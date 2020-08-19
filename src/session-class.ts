@@ -10,6 +10,7 @@ export interface ChatMessage {
   message: string;
   messageId: number;
   userId: string;
+  userName: string;
   date?: Date;
 }
 
@@ -47,6 +48,7 @@ export class SessionEnviroment {
       message: message,
       messageId: this.messageIdCounter++,
       userId: senderId,
+      userName: this.userDataArray.get(senderId).userName,
     };
     this.chatData.chatMessages.push(chatMessage);
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
@@ -57,6 +59,7 @@ export class SessionEnviroment {
       message: message,
       messageId: this.messageIdCounter++,
       userId: "SERVER",
+      userName: "Server",
     };
     this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
   }
@@ -75,6 +78,7 @@ export class SessionEnviroment {
       sessionId: this.id,
     };
     this.io.in(uId).emit("SessionIni", sessionInitData);
+    this.io.in(this.id).emit("newUser", this.mapToObj(this.userDataArray));
     for (const msg of this.chatData.chatMessages) {
       this.io.in(uId).emit(enviroment.messageIdentifier, msg);
     }
@@ -106,6 +110,16 @@ export class SessionEnviroment {
       (item) => item != generatedName
     );
     return generatedName;
+  }
+
+  private mapToObj(inputMap: Map<any, any>) {
+    let obj = {};
+
+    inputMap.forEach(function (value, key) {
+      obj[key] = value;
+    });
+
+    return obj;
   }
 
   destroy() {
