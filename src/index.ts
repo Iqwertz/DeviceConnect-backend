@@ -48,7 +48,8 @@ app.post("/new", (req, res) => {
 
     sessionEnviroment.sendServerMessage(
       "successfully connected to " + newId,
-      socket.id
+      socket.id,
+      false
     );
     sessionEnviroment.registerUser(socket.id);
 

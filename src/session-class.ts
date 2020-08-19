@@ -54,14 +54,18 @@ export class SessionEnviroment {
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
   }
 
-  sendServerMessage(message: string, senderId: string) {
+  sendServerMessage(message: string, senderId: string, all: boolean) {
     const chatMessage: ChatMessage = {
       message: message,
       messageId: this.messageIdCounter++,
       userId: "SERVER",
       userName: "Server",
     };
-    this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
+    if (all) {
+      this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
+    } else {
+      this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
+    }
   }
 
   registerUser(uId: string) {
@@ -82,7 +86,7 @@ export class SessionEnviroment {
     for (const msg of this.chatData.chatMessages) {
       this.io.in(uId).emit(enviroment.messageIdentifier, msg);
     }
-
+    this.sendServerMessage(uName + " joined", uId, true);
     clearTimeout(this.destroyTimeout);
 
     console.log("User:" + uId + " joined on session " + this.id);
