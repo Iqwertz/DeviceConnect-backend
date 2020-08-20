@@ -73,8 +73,8 @@ app.get("/session/:id", (req, res) => {
   }
 });
 
-http.listen(3000, () => {
-  console.log("listening on *:3000");
+http.listen(4269, () => {
+  console.log("listening on *:4269");
 });
 
 function getRandomId(
