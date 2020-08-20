@@ -48,7 +48,8 @@ app.post("/new", (req, res) => {
 
     sessionEnviroment.sendServerMessage(
       "successfully connected to " + newId,
-      socket.id
+      socket.id,
+      false
     );
     sessionEnviroment.registerUser(socket.id);
 
@@ -72,8 +73,8 @@ app.get("/session/:id", (req, res) => {
   }
 });
 
-http.listen(3000, () => {
-  console.log("listening on *:3000");
+http.listen(enviroment.port, () => {
+  console.log("listening on *:" + enviroment.port);
 });
 
 function getRandomId(
