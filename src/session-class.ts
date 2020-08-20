@@ -55,14 +55,17 @@ export class SessionEnviroment {
   }
 
   sendServerMessage(message: string, senderId: string, all: boolean) {
+    const mId: number = all ? this.messageIdCounter++ : -1;
     const chatMessage: ChatMessage = {
       message: message,
-      messageId: this.messageIdCounter++,
+      messageId: mId,
       userId: "SERVER",
       userName: "Server",
     };
+
     if (all) {
       this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
+      this.chatData.chatMessages.push(chatMessage);
     } else {
       this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
     }
@@ -93,8 +96,12 @@ export class SessionEnviroment {
   }
 
   disconnectUser(uId: string) {
+    const userName: string = this.userDataArray.get(uId).userName;
+    this.availableAnimalNames.push(userName);
     this.userDataArray.delete(uId);
     console.log(this.userDataArray);
+    this.io.in(this.id).emit("newUser", this.mapToObj(this.userDataArray));
+    this.sendServerMessage(userName + " disconnected", uId, true);
     this.checkActiveUser();
   }
 

@@ -1,4 +1,5 @@
 export const enviroment = {
+  port: 4269,
   messageIdentifier: "chat message",
   destroySessionDelay: 300000,
   animalNames: [
