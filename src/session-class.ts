@@ -6,12 +6,20 @@ export interface ChatData {
   chatMessages: ChatMessage[];
 }
 
+export type ContentType = "Picture" | "Text";
+
 export interface ChatMessage {
   message: string;
   messageId: number;
   userId: string;
   userName: string;
+  contentType: ContentType;
   date?: Date;
+}
+
+export interface ReceiveMessageObject {
+  message: string;
+  contentType: ContentType;
 }
 
 export interface SessionInitData {
@@ -43,12 +51,13 @@ export class SessionEnviroment {
     };
   }
 
-  sendChatMessage(message: string, senderId: string) {
+  sendChatMessage(message: ReceiveMessageObject, senderId: string) {
     const chatMessage: ChatMessage = {
-      message: message,
+      message: message.message,
       messageId: this.messageIdCounter++,
       userId: senderId,
       userName: this.userDataArray.get(senderId).userName,
+      contentType: message.contentType,
     };
     this.chatData.chatMessages.push(chatMessage);
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
@@ -61,6 +70,7 @@ export class SessionEnviroment {
       messageId: mId,
       userId: "SERVER",
       userName: "Server",
+      contentType: "Text",
     };
 
     if (all) {
