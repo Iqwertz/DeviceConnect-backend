@@ -2,6 +2,7 @@ export const enviroment = {
   port: 4269,
   messageIdentifier: "chat message",
   destroySessionDelay: 300000,
+  maxPictures: 20,
   animalNames: [
     "Ant",
     "Caterpillar",

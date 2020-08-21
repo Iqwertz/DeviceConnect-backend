@@ -2,16 +2,23 @@ import { enviroment } from "./enviroment";
 import { removeSessionById } from "./index";
 export interface ChatData {
   chatId: string;
-  chatUser?: number;
-  chatMessages: ChatMessage[];
+  chatMessages: Map<number, ChatMessage>;
 }
+
+export type ContentType = "Picture" | "Text";
 
 export interface ChatMessage {
   message: string;
   messageId: number;
   userId: string;
   userName: string;
+  contentType: ContentType;
   date?: Date;
+}
+
+export interface ReceiveMessageObject {
+  message: string;
+  contentType: ContentType;
 }
 
 export interface SessionInitData {
@@ -33,24 +40,33 @@ export class SessionEnviroment {
   private destroyTimeout;
   private availableAnimalNames: string[] = enviroment.animalNames;
   messageIdCounter: number = 0;
+  pictureMessageIds: number[] = [];
 
   constructor(newId: string, newSocket: any) {
     this.id = newId;
     this.io = newSocket;
     this.chatData = {
       chatId: this.id,
-      chatMessages: [],
+      chatMessages: new Map<number, ChatMessage>(),
     };
   }
 
-  sendChatMessage(message: string, senderId: string) {
+  sendChatMessage(message: ReceiveMessageObject, senderId: string) {
     const chatMessage: ChatMessage = {
-      message: message,
+      message: message.message,
       messageId: this.messageIdCounter++,
       userId: senderId,
       userName: this.userDataArray.get(senderId).userName,
+      contentType: message.contentType,
     };
-    this.chatData.chatMessages.push(chatMessage);
+    if (chatMessage.contentType == "Picture") {
+      this.pictureMessageIds.push(chatMessage.messageId);
+      if (this.pictureMessageIds.length > enviroment.maxPictures) {
+        this.deleteChatMessage(this.pictureMessageIds[0]);
+        this.pictureMessageIds.shift();
+      }
+    }
+    this.chatData.chatMessages.set(chatMessage.messageId, chatMessage);
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
   }
 
@@ -61,14 +77,20 @@ export class SessionEnviroment {
       messageId: mId,
       userId: "SERVER",
       userName: "Server",
+      contentType: "Text",
     };
 
     if (all) {
       this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage);
-      this.chatData.chatMessages.push(chatMessage);
+      this.chatData.chatMessages.set(chatMessage.messageId, chatMessage);
     } else {
       this.io.in(senderId).emit(enviroment.messageIdentifier, chatMessage);
     }
+  }
+
+  deleteChatMessage(mId: number) {
+    //This function deletes the message only on the server!
+    this.chatData.chatMessages.delete(mId);
   }
 
   registerUser(uId: string) {
@@ -86,9 +108,13 @@ export class SessionEnviroment {
     };
     this.io.in(uId).emit("SessionIni", sessionInitData);
     this.io.in(this.id).emit("newUser", this.mapToObj(this.userDataArray));
+    this.chatData.chatMessages.forEach((value, key) => {
+      this.io.in(uId).emit(enviroment.messageIdentifier, value);
+    });
+    /*
     for (const msg of this.chatData.chatMessages) {
       this.io.in(uId).emit(enviroment.messageIdentifier, msg);
-    }
+    }*/
     this.sendServerMessage(uName + " joined", uId, true);
     clearTimeout(this.destroyTimeout);
 
