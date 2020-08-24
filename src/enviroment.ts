@@ -3,6 +3,7 @@ export const enviroment = {
   messageIdentifier: "chat message",
   destroySessionDelay: 300000,
   maxPictures: 20,
+  maxDocuments: 10,
   animalNames: [
     "Ant",
     "Caterpillar",

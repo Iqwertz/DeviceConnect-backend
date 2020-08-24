@@ -5,7 +5,7 @@ export interface ChatData {
   chatMessages: Map<number, ChatMessage>;
 }
 
-export type ContentType = "Picture" | "Text";
+export type ContentType = "Document" | "Picture" | "Text";
 
 export interface ChatMessage {
   message: string;
@@ -13,11 +13,13 @@ export interface ChatMessage {
   userId: string;
   userName: string;
   contentType: ContentType;
+  base64Data: string;
   date?: Date;
 }
 
 export interface ReceiveMessageObject {
   message: string;
+  base64Data: string;
   contentType: ContentType;
 }
 
@@ -42,6 +44,9 @@ export class SessionEnviroment {
   messageIdCounter: number = 0;
   pictureMessageIds: number[] = [];
 
+  documentIdCounter: number = 0;
+  documentMessageIds: number[] = [];
+
   constructor(newId: string, newSocket: any) {
     this.id = newId;
     this.io = newSocket;
@@ -57,6 +62,7 @@ export class SessionEnviroment {
       messageId: this.messageIdCounter++,
       userId: senderId,
       userName: this.userDataArray.get(senderId).userName,
+      base64Data: message.base64Data,
       contentType: message.contentType,
     };
     if (chatMessage.contentType == "Picture") {
@@ -64,6 +70,12 @@ export class SessionEnviroment {
       if (this.pictureMessageIds.length > enviroment.maxPictures) {
         this.deleteChatMessage(this.pictureMessageIds[0]);
         this.pictureMessageIds.shift();
+      }
+    } else if (chatMessage.contentType == "Document") {
+      this.documentMessageIds.push(chatMessage.messageId);
+      if (this.documentMessageIds.length > enviroment.maxDocuments) {
+        this.deleteChatMessage(this.pictureMessageIds[0]);
+        this.documentMessageIds.shift();
       }
     }
     this.chatData.chatMessages.set(chatMessage.messageId, chatMessage);
@@ -78,6 +90,7 @@ export class SessionEnviroment {
       userId: "SERVER",
       userName: "Server",
       contentType: "Text",
+      base64Data: "",
     };
 
     if (all) {
