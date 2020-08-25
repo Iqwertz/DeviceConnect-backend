@@ -59,6 +59,7 @@ export class SessionEnviroment {
   }
 
   sendChatMessage(message: ReceiveMessageObject, senderId: string) {
+    console.log(message);
     const chatMessage: ChatMessage = {
       message: message.message,
       messageId: this.messageIdCounter++,
