@@ -46,12 +46,13 @@ app.post("/new", (req, res) => {
     socket.join(newId);
     console.log("Connected");
 
+    sessionEnviroment.registerUser(socket.id);
+
     sessionEnviroment.sendServerMessage(
       "successfully connected to " + newId,
       socket.id,
       false
     );
-    sessionEnviroment.registerUser(socket.id);
 
     socket.on(enviroment.messageIdentifier, (msg) => {
       sessionEnviroment.sendChatMessage(msg, socket.id);
