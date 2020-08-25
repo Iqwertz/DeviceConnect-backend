@@ -23,7 +23,7 @@ if (enviroment.ssl) {
 }
 
 if (enviroment.ssl) {
-  https.createServer(options, app);
+  https = createServer(options, app);
 } else {
   https = createServer(app);
 }
