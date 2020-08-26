@@ -37,6 +37,7 @@ app.post("/new", (req, res) => {
   const newId = getNewSessionId(4);
 
   const io = socketio(http, {
+    origins: ["62.178.37.97:4269"],
     path: `/${newId}`,
   });
 
