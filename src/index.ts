@@ -51,6 +51,7 @@ app.post("/new", (req, res) => {
 
   const io = socketio(http, {
     path: `/${newId}`,
+    origins: req.headers.origin,
   });
 
   const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io);
