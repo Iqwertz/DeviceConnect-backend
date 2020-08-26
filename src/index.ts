@@ -44,6 +44,7 @@ function getNewSessionId(digits: number) {
 }
 
 app.post("/new", (req, res) => {
+  console.log(req.headers.origin);
   res.header("Access-Control-Allow-Origin", [req.headers.origin]);
 
   const newId = getNewSessionId(4);
