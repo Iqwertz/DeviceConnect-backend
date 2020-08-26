@@ -15,6 +15,7 @@ const whitelist = ["http://localhost:4200", "http://Iqwertz.github.com"];
 const corsOptions = {
   credentials: true, // This is important.
   origin: (origin, callback) => {
+    console.log(origin);
     if (whitelist.includes(origin)) return callback(null, true);
 
     callback(new Error("Not allowed by CORS"));
