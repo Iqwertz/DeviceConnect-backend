@@ -11,7 +11,7 @@ const sessionsStore: Map<string, SessionEnviroment> = new Map<
 var cors = require("cors");
 const app = express();
 let http;
-const whitelist = ["http://localhost:4200", "https://Iqwertz.github.com"];
+const whitelist = ["http://localhost:4200", "https://iqwertz.github.io"];
 const corsOptions = {
   credentials: true, // This is important.
   origin: (origin, callback) => {
