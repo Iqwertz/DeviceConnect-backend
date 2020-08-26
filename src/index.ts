@@ -11,10 +11,19 @@ const sessionsStore: Map<string, SessionEnviroment> = new Map<
 var cors = require("cors");
 const app = express();
 let http;
+const whitelist = ["http://localhost:4200", "http://Iqwertz.github.com"];
+const corsOptions = {
+  credentials: true, // This is important.
+  origin: (origin, callback) => {
+    if (whitelist.includes(origin)) return callback(null, true);
+
+    callback(new Error("Not allowed by CORS"));
+  },
+};
 
 http = createServer(app);
 
-app.use(cors());
+app.use(cors(corsOptions));
 /*app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });*/
