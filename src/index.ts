@@ -18,10 +18,8 @@ if (enviroment.ssl) {
 
   options = {
     key: fs.readFileSync("key.pem", "utf8"),
-    ca: fs.readFileSync("client.csr", "utf8"),
     cert: fs.readFileSync("cert.pem", "utf8"),
   };
-  console.log(options);
 }
 
 if (enviroment.ssl) {
