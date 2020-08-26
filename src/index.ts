@@ -17,14 +17,13 @@ if (enviroment.ssl) {
   const fs = require("fs");
 
   options = {
-    key: fs.readFileSync("key.pem", "utf8"),
-    cert: fs.readFileSync("cert.pem", "utf8"),
+    key: fs.readFileSync("key.pem"),
+    cert: fs.readFileSync("cert.pem"),
   };
 }
 
 if (enviroment.ssl) {
   https = createServer(options, app);
-  console.log("running ssl server");
 } else {
   https = createServer(app);
 }
