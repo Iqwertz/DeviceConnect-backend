@@ -10,23 +10,9 @@ const sessionsStore: Map<string, SessionEnviroment> = new Map<
 >();
 var cors = require("cors");
 const app = express();
-let https;
-let options;
-if (enviroment.ssl) {
-  https = require("https");
-  const fs = require("fs");
+let http;
 
-  options = {
-    key: fs.readFileSync("key.pem"),
-    cert: fs.readFileSync("cert.pem"),
-  };
-}
-
-if (enviroment.ssl) {
-  https = createServer(options, app);
-} else {
-  https = createServer(app);
-}
+http = createServer(app);
 
 app.use(cors());
 /*app.get("/", (req, res) => {
@@ -50,7 +36,7 @@ function getNewSessionId(digits: number) {
 app.post("/new", (req, res) => {
   const newId = getNewSessionId(4);
 
-  const io = socketio(https, {
+  const io = socketio(http, {
     path: `/${newId}`,
   });
 
@@ -90,7 +76,7 @@ app.get("/session/:id", (req, res) => {
   }
 });
 
-https.listen(enviroment.port, () => {
+http.listen(enviroment.port, () => {
   console.log("listening on *:" + enviroment.port);
 });
 
