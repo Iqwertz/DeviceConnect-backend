@@ -17,7 +17,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     console.log(origin);
     if (whitelist.includes(origin)) return callback(null, true);
-
+    console.log("Cors Error");
     callback(new Error("Not allowed by CORS"));
   },
 };
@@ -44,10 +44,11 @@ function getNewSessionId(digits: number) {
 }
 
 app.post("/new", (req, res) => {
+  res.header("Access-Control-Allow-Origin", [req.headers.origin]);
+
   const newId = getNewSessionId(4);
 
   const io = socketio(http, {
-    origins: ["62.178.37.97:4269"],
     path: `/${newId}`,
   });
 
@@ -81,6 +82,7 @@ app.post("/new", (req, res) => {
 
 app.get("/session/:id", (req, res) => {
   if (sessionsStore.has(req.params.id)) {
+    console.log("200");
     res.json();
   } else {
     res.sendStatus(404);
