@@ -11,6 +11,8 @@ const sessionsStore: Map<string, SessionEnviroment> = new Map<
 var cors = require("cors");
 const app = express();
 let http;
+
+/////PArams for cors errors, This is mostly a mess I am going to clean it up when the server is running and working
 const whitelist = ["http://localhost:4200", "https://iqwertz.github.io"];
 const corsOptions = {
   credentials: true, // This is important.
@@ -35,6 +37,7 @@ export function removeSessionById(id: string) {
 }
 
 function getNewSessionId(digits: number) {
+  //creates a new session id
   let generatedId: string = getRandomId(4, true, true, false);
   while (sessionsStore.has(generatedId)) {
     generatedId = getRandomId(4, true, true, false);
@@ -44,45 +47,51 @@ function getNewSessionId(digits: number) {
 }
 
 app.post("/new", (req, res) => {
-  console.log(req.headers.origin);
-  res.header("Access-Control-Allow-Origin", [req.headers.origin]);
+  //creates a new session
+  res.header("Access-Control-Allow-Origin", [req.headers.origin]); //cors blabla
 
-  const newId = getNewSessionId(4);
+  const newId = getNewSessionId(4); //generate new Id
 
   const io = socketio(http, {
+    //create socket
     path: `/${newId}`,
     origins: req.headers.origin,
   });
 
-  const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io);
-  sessionsStore.set(newId, sessionEnviroment);
+  const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io); //create new SessionEnviroment
+  sessionsStore.set(newId, sessionEnviroment); //register new Session in the session map
   console.log("New Session generated");
 
   io.on("connection", (socket) => {
-    socket.join(newId);
+    //when a user connects
+    socket.join(newId); //join socket in session
     console.log("Connected");
 
-    sessionEnviroment.registerUser(socket.id);
+    sessionEnviroment.registerUser(socket.id); //register user in session
 
     sessionEnviroment.sendServerMessage(
+      //send to user success message
       "successfully connected to " + newId,
       socket.id,
       false
     );
 
     socket.on(enviroment.messageIdentifier, (msg) => {
+      //when a new message arrives call sendChatMessage
       sessionEnviroment.sendChatMessage(msg, socket.id);
     });
 
     socket.on("disconnect", () => {
+      //when user disconnects call disconnectUser
       sessionEnviroment.disconnectUser(socket.id);
       console.log("user disconnected");
     });
   });
-  res.json({ sessionId: newId });
+  res.json({ sessionId: newId }); //send the session is as respons back
 });
 
 app.get("/session/:id", (req, res) => {
+  //checks if session exists in session store and returns a html statu
   if (sessionsStore.has(req.params.id)) {
     console.log("200");
     res.json();
@@ -92,10 +101,11 @@ app.get("/session/:id", (req, res) => {
 });
 
 http.listen(enviroment.port, () => {
+  //listen to port
   console.log("listening on *:" + enviroment.port);
 });
 
-function getRandomId(
+function getRandomId( //universal function to generate random id
   digits: number,
   numbers: boolean,
   capitalLetter: boolean,
