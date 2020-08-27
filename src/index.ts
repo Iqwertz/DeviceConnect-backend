@@ -1,3 +1,9 @@
+//Error
+/*
+as been blocked by CORS policy: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*'
+when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by
+ the withCredentials attribute.
+*/
 import { SessionEnviroment } from "./session-class";
 import * as express from "express";
 import { createServer } from "http";
