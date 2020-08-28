@@ -29,12 +29,11 @@ const corsOptions = {
   origin: (origin, callback) => {
     console.log(origin);
     if (whitelist.includes(origin)) return callback(null, true);
-    console.log("Cors Error");
     callback(new Error("Not allowed by CORS"));
   },
 };
 
-http = createServer(app);
+http = require("http").Server(app);
 
 app.use(cors(corsOptions));
 /*app.get("/", (req, res) => {
@@ -62,10 +61,9 @@ app.post("/new", (req, res) => {
 
   const newId = getNewSessionId(4); //generate new Id
 
-  const io = socketio(http, {
+  let io = socketio(server, {
     //create socket
     path: `/${newId}`,
-    origins: req.headers.origin,
   });
 
   const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io); //create new SessionEnviroment
@@ -110,7 +108,7 @@ app.get("/session/:id", (req, res) => {
   }
 });
 
-http.listen(enviroment.port, () => {
+let server = http.listen(enviroment.port, () => {
   //listen to port
   console.log("listening on *:" + enviroment.port);
 });
