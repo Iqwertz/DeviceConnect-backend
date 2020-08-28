@@ -117,8 +117,8 @@ function getRandomId( //universal function to generate random id
   capitalLetter: boolean,
   letter: boolean
 ): string {
-  const nChar = "0123456789";
-  const cChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const nChar = "123456789";  //All: const nChar = "0123456789"; /Removed easy mistaken Id letter  
+  const cChar = "ABCDEFGHJKLMNPQRSTUVWXYZ"; //All const cChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";  / Removed easy mistaken Id letter
   const lChar = "abcdefghijklmnopqrstuvwxyz";
 
   var characters = numbers ? nChar : "";
