@@ -19,7 +19,11 @@ const app = express();
 let http;
 
 /////PArams for cors errors, This is mostly a mess I am going to clean it up when the server is running and working
-const whitelist = ["http://localhost:4200", "https://iqwertz.github.io"];
+const whitelist = [
+  "http://localhost:4200",
+  "https://iqwertz.github.io",
+  "http://transfertube.000webhostapp.com",
+];
 const corsOptions = {
   credentials: true, // This is important.
   origin: (origin, callback) => {
@@ -117,7 +121,7 @@ function getRandomId( //universal function to generate random id
   capitalLetter: boolean,
   letter: boolean
 ): string {
-  const nChar = "123456789";  //All: const nChar = "0123456789"; /Removed easy mistaken Id letter  
+  const nChar = "123456789"; //All: const nChar = "0123456789"; /Removed easy mistaken Id letter
   const cChar = "ABCDEFGHJKLMNPQRSTUVWXYZ"; //All const cChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";  / Removed easy mistaken Id letter
   const lChar = "abcdefghijklmnopqrstuvwxyz";
 
