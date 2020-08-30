@@ -68,7 +68,8 @@ export interface Chunk {
   //Object containing chunk data
   chunkType: ChunkType;
   chunkData: string;
-  chunkID: number;
+  chunkID: string;
+  senderId: string;
 }
 
 export class SessionEnviroment {
@@ -135,16 +136,22 @@ export class SessionEnviroment {
   }
 
   receiveChunk(chunk: Chunk) {
-    const cId = chunk.chunkID.toString();
+    const cId = chunk.chunkID;
     let msg = this.receivingMessages.get(cId);
-    if ((chunk.chunkType = "start")) {
+    if (chunk.chunkType == "start") {
       msg.base64Data = chunk.chunkData;
-    } else if ((chunk.chunkType = "middle")) {
+      this.receivingMessages.set(cId, msg);
+    } else if (chunk.chunkType == "middle") {
       msg.base64Data += chunk.chunkData;
-    } else if ((chunk.chunkType = "end")) {
-      console.log(msg.base64Data);
+      this.receivingMessages.set(cId, msg);
+    } else if (chunk.chunkType == "end") {
+      console.log("image upload finished");
+      msg.base64Data += chunk.chunkData;
+      this.chatData.chatMessages.set(msg.messageId, msg);
+      this.receivingMessages.delete(cId);
     }
-    this.receivingMessages.set(cId, msg);
+
+    this.io.in(chunk.senderId).emit("chunkResponse", { res: "next" });
   }
 
   sendServerMessage(message: string, senderId: string, all: boolean) {
