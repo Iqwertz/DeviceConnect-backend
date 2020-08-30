@@ -62,6 +62,15 @@ export interface UserData {
   userId: string;
 }
 
+export type ChunkType = "start" | "middle" | "end";
+
+export interface Chunk {
+  //Object containing chunk data
+  chunkType: ChunkType;
+  chunkData: string;
+  chunkID: number;
+}
+
 export class SessionEnviroment {
   id: string; //session id
   chatData: ChatData;
@@ -75,6 +84,8 @@ export class SessionEnviroment {
   documentMessageIds: number[] = []; //Array holding Ids of all messages with dopcuments
 
   sessionUserIds: string[] = []; //Used to check if uuid is really unique
+
+  receivingMessages: Map<string, ChatMessage> = new Map<string, ChatMessage>();
 
   constructor(newId: string, newSocket: any) {
     this.id = newId;
@@ -96,6 +107,12 @@ export class SessionEnviroment {
       base64Data: message.base64Data,
       contentType: message.contentType,
     };
+    if (chatMessage.contentType != "Text") {
+      this.receivingMessages.set(chatMessage.base64Data, chatMessage);
+      this.io.in(senderId).emit("chunkResponse", { res: "next" });
+      //transform Message for loading
+    }
+    /*
     if (chatMessage.contentType == "Picture") {
       //If message is a picture add it to picture array
       this.pictureMessageIds.push(chatMessage.messageId);
@@ -112,9 +129,22 @@ export class SessionEnviroment {
         this.deleteChatMessage(this.pictureMessageIds[0]);
         this.documentMessageIds.shift();
       }
-    }
+    }*/
     this.chatData.chatMessages.set(chatMessage.messageId, chatMessage); //sace chat Message on server
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage); //emit message to everyone in session
+  }
+
+  receiveChunk(chunk: Chunk) {
+    const cId = chunk.chunkID.toString();
+    let msg = this.receivingMessages.get(cId);
+    if ((chunk.chunkType = "start")) {
+      msg.base64Data = chunk.chunkData;
+    } else if ((chunk.chunkType = "middle")) {
+      msg.base64Data += chunk.chunkData;
+    } else if ((chunk.chunkType = "end")) {
+      console.log(msg.base64Data);
+    }
+    this.receivingMessages.set(cId, msg);
   }
 
   sendServerMessage(message: string, senderId: string, all: boolean) {

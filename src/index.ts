@@ -89,6 +89,10 @@ app.post("/new", (req, res) => {
       sessionEnviroment.sendChatMessage(msg, socket.id);
     });
 
+    socket.on("chunkData", (msg) => {
+      sessionEnviroment.receiveChunk(msg);
+    });
+
     socket.on("disconnect", () => {
       //when user disconnects call disconnectUser
       sessionEnviroment.disconnectUser(socket.id);
