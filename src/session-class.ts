@@ -39,6 +39,7 @@ export interface ChatMessage {
   userName: string; //the sender Name
   contentType: ContentType; //the content of the message
   base64Data: string; //base64data when message is a file or document
+  chunkedBase64Data?: Chunk[];
   date?: Date; //Date currently not implemented
 }
 
@@ -69,6 +70,8 @@ export interface Chunk {
   chunkType: ChunkType;
   chunkData: string;
   chunkID: string;
+  chunkIndex: number;
+  parentMessageId: number;
   senderId: string;
 }
 
@@ -108,6 +111,7 @@ export class SessionEnviroment {
       userId: senderId,
       userName: this.userDataArray.get(senderId).userName,
       base64Data: message.base64Data,
+      chunkedBase64Data: [],
       contentType: message.contentType,
     };
     if (chatMessage.contentType != "Text") {
@@ -143,13 +147,17 @@ export class SessionEnviroment {
     let msg = this.receivingMessages.get(cId);
     if (chunk.chunkType == "start") {
       msg.base64Data = chunk.chunkData;
+
+      msg.chunkedBase64Data.push(chunk);
       this.receivingMessages.set(cId, msg);
     } else if (chunk.chunkType == "middle") {
       msg.base64Data += chunk.chunkData;
+      msg.chunkedBase64Data.push(chunk);
       this.receivingMessages.set(cId, msg);
     } else if (chunk.chunkType == "end") {
       console.log("image upload finished");
       msg.base64Data += chunk.chunkData;
+      msg.chunkedBase64Data.push(chunk);
       this.chatData.chatMessages.set(msg.messageId, msg);
       this.receivingMessages.delete(cId);
       this.sendFileMessage(msg);
@@ -158,25 +166,34 @@ export class SessionEnviroment {
     this.io.in(chunk.senderId).emit("chunkResponse", { res: "next" });
   }
 
-  sendFileMessage(msg: ChatMessage) {
-    let chunkedData = this.chunkString(
+  sendFileMessage(msg: ChatMessage, user?: string) {
+    if (user == undefined) {
+      user = this.id;
+    }
+    /* let chunkedData = this.chunkString(
       msg.base64Data,
       enviroment.chunkSize,
       msg.messageId.toString(),
       msg.userId
     );
-    this.chunkQueue = this.chunkQueue.concat(chunkedData);
-    this.io.in(this.id).emit("chunkData", this.chunkQueue[0]);
-    this.chunkQueue.shift();
+    this.chunkQueue = this.chunkQueue.concat(chunkedData);*/
+    msg.chunkedBase64Data[0].parentMessageId = msg.messageId;
+    this.io.in(user).emit("chunkData", msg.chunkedBase64Data[0]);
+    //this.chunkQueue.shift();
   }
 
   chunkResponse(res) {
+    console.log(res);
     if (res.res == "next") {
-      if (this.chunkQueue.length >= 1) {
-        this.io.in(res.senderId).emit("chunkData", this.chunkQueue[0]);
-        this.chunkQueue.shift();
-      }
+      //if (this.chunkQueue.length >= 1) {
+      //msg.chunkedBase64Data[0].parentMessageId=msg.messageId;
+      let chunk = this.chatData.chatMessages.get(res.parentMessageId)
+        .chunkedBase64Data[res.lastChunkIndex + 1];
+      chunk.parentMessageId = res.parentMessageId;
+      this.io.in(res.senderId).emit("chunkData", chunk);
+      //this.chunkQueue.shift();
     }
+    //}
   }
 
   private chunkString(
@@ -195,7 +212,9 @@ export class SessionEnviroment {
         chunkData: str.substr(offset, len),
         chunkType: "middle",
         chunkID: messageId,
+        parentMessageId: Number(messageId),
         senderId: senderId,
+        chunkIndex: i,
       };
       offset += len;
     }
@@ -204,8 +223,10 @@ export class SessionEnviroment {
       r.push({
         chunkData: "",
         chunkID: messageId,
+        parentMessageId: Number(messageId),
         chunkType: "end",
         senderId: senderId,
+        chunkIndex: 1,
       });
     }
 
@@ -267,7 +288,7 @@ export class SessionEnviroment {
         let msg = Object.assign({}, value);
         msg.base64Data = "";
         this.io.in(uId).emit(enviroment.messageIdentifier, msg);
-        this.sendFileMessage(value);
+        this.sendFileMessage(value, uId);
       } else {
         this.io.in(uId).emit(enviroment.messageIdentifier, value);
       }
