@@ -2,7 +2,7 @@
 /*
 Session Class:
 Manages sessions and contains session data
-Every new Session is an ew instance of this class
+Every new Session is an instance of this class
 
 Interfaces: 
   ChatMessage
@@ -39,6 +39,7 @@ export interface ChatMessage {
   userName: string; //the sender Name
   contentType: ContentType; //the content of the message
   base64Data: string; //base64data when message is a file or document
+  chunkedBase64Data?: Chunk[];
   date?: Date; //Date currently not implemented
 }
 
@@ -68,7 +69,10 @@ export interface Chunk {
   //Object containing chunk data
   chunkType: ChunkType;
   chunkData: string;
-  chunkID: number;
+  chunkID: string;
+  chunkIndex: number;
+  parentMessageId: number;
+  senderId: string;
 }
 
 export class SessionEnviroment {
@@ -86,6 +90,8 @@ export class SessionEnviroment {
   sessionUserIds: string[] = []; //Used to check if uuid is really unique
 
   receivingMessages: Map<string, ChatMessage> = new Map<string, ChatMessage>();
+
+  chunkQueue: Chunk[] = [];
 
   constructor(newId: string, newSocket: any) {
     this.id = newId;
@@ -105,46 +111,129 @@ export class SessionEnviroment {
       userId: senderId,
       userName: this.userDataArray.get(senderId).userName,
       base64Data: message.base64Data,
+      chunkedBase64Data: [],
       contentType: message.contentType,
     };
     if (chatMessage.contentType != "Text") {
       this.receivingMessages.set(chatMessage.base64Data, chatMessage);
       this.io.in(senderId).emit("chunkResponse", { res: "next" });
+
+      if (chatMessage.contentType == "Picture") {
+        //If message is a picture add it to picture array
+        this.pictureMessageIds.push(chatMessage.messageId);
+        if (this.pictureMessageIds.length > enviroment.maxPictures) {
+          //When to much pictures are saved delete the last one
+          this.deleteChatMessage(this.pictureMessageIds[0]);
+          this.pictureMessageIds.shift();
+        }
+      } else if (chatMessage.contentType == "Document") {
+        //If message is a picture add it to picture array
+        this.documentMessageIds.push(chatMessage.messageId);
+        if (this.documentMessageIds.length > enviroment.maxDocuments) {
+          //When to much documents are saved delete the last one
+          this.deleteChatMessage(this.pictureMessageIds[0]);
+          this.documentMessageIds.shift();
+        }
+      }
+
       //transform Message for loading
     }
-    /*
-    if (chatMessage.contentType == "Picture") {
-      //If message is a picture add it to picture array
-      this.pictureMessageIds.push(chatMessage.messageId);
-      if (this.pictureMessageIds.length > enviroment.maxPictures) {
-        //When to much pictures are saved delete the last one
-        this.deleteChatMessage(this.pictureMessageIds[0]);
-        this.pictureMessageIds.shift();
-      }
-    } else if (chatMessage.contentType == "Document") {
-      //If message is a picture add it to picture array
-      this.documentMessageIds.push(chatMessage.messageId);
-      if (this.documentMessageIds.length > enviroment.maxDocuments) {
-        //When to much documents are saved delete the last one
-        this.deleteChatMessage(this.pictureMessageIds[0]);
-        this.documentMessageIds.shift();
-      }
-    }*/
     this.chatData.chatMessages.set(chatMessage.messageId, chatMessage); //sace chat Message on server
     this.io.in(this.id).emit(enviroment.messageIdentifier, chatMessage); //emit message to everyone in session
   }
 
   receiveChunk(chunk: Chunk) {
-    const cId = chunk.chunkID.toString();
+    const cId = chunk.chunkID;
     let msg = this.receivingMessages.get(cId);
-    if ((chunk.chunkType = "start")) {
+    if (chunk.chunkType == "start") {
       msg.base64Data = chunk.chunkData;
-    } else if ((chunk.chunkType = "middle")) {
+
+      msg.chunkedBase64Data.push(chunk);
+      this.receivingMessages.set(cId, msg);
+    } else if (chunk.chunkType == "middle") {
       msg.base64Data += chunk.chunkData;
-    } else if ((chunk.chunkType = "end")) {
-      console.log(msg.base64Data);
+      msg.chunkedBase64Data.push(chunk);
+      this.receivingMessages.set(cId, msg);
+    } else if (chunk.chunkType == "end") {
+      console.log("image upload finished");
+      msg.base64Data += chunk.chunkData;
+      msg.chunkedBase64Data.push(chunk);
+      this.chatData.chatMessages.set(msg.messageId, msg);
+      this.receivingMessages.delete(cId);
+      this.sendFileMessage(msg);
     }
-    this.receivingMessages.set(cId, msg);
+
+    this.io.in(chunk.senderId).emit("chunkResponse", { res: "next" });
+  }
+
+  sendFileMessage(msg: ChatMessage, user?: string) {
+    if (user == undefined) {
+      user = this.id;
+    }
+    /* let chunkedData = this.chunkString(
+      msg.base64Data,
+      enviroment.chunkSize,
+      msg.messageId.toString(),
+      msg.userId
+    );
+    this.chunkQueue = this.chunkQueue.concat(chunkedData);*/
+    msg.chunkedBase64Data[0].parentMessageId = msg.messageId;
+    this.io.in(user).emit("chunkData", msg.chunkedBase64Data[0]);
+    //this.chunkQueue.shift();
+  }
+
+  chunkResponse(res) {
+    console.log(res);
+    if (res.res == "next") {
+      //if (this.chunkQueue.length >= 1) {
+      //msg.chunkedBase64Data[0].parentMessageId=msg.messageId;
+      let chunk = this.chatData.chatMessages.get(res.parentMessageId)
+        .chunkedBase64Data[res.lastChunkIndex + 1];
+      chunk.parentMessageId = res.parentMessageId;
+      this.io.in(res.senderId).emit("chunkData", chunk);
+      //this.chunkQueue.shift();
+    }
+    //}
+  }
+
+  private chunkString(
+    str: string,
+    len: number,
+    messageId: string,
+    senderId: string
+  ): Chunk[] {
+    //splits string into chunks
+    const size = Math.ceil(str.length / len);
+    const r: Chunk[] = Array(size);
+    let offset = 0;
+
+    for (let i = 0; i < size; i++) {
+      r[i] = {
+        chunkData: str.substr(offset, len),
+        chunkType: "middle",
+        chunkID: messageId,
+        parentMessageId: Number(messageId),
+        senderId: senderId,
+        chunkIndex: i,
+      };
+      offset += len;
+    }
+
+    if (r.length == 1) {
+      r.push({
+        chunkData: "",
+        chunkID: messageId,
+        parentMessageId: Number(messageId),
+        chunkType: "end",
+        senderId: senderId,
+        chunkIndex: 1,
+      });
+    }
+
+    r[0].chunkType = "start";
+    r[r.length - 1].chunkType = "end";
+
+    return r;
   }
 
   sendServerMessage(message: string, senderId: string, all: boolean) {
@@ -195,7 +284,14 @@ export class SessionEnviroment {
     this.io.in(this.id).emit("newUser", this.mapToObj(this.userDataArray)); //send new user notification to everyone (to update userdata on client side)
     this.chatData.chatMessages.forEach((value, key) => {
       //send every previously send message to the new user
-      this.io.in(uId).emit(enviroment.messageIdentifier, value);
+      if (value.contentType != "Text") {
+        let msg = Object.assign({}, value);
+        msg.base64Data = "";
+        this.io.in(uId).emit(enviroment.messageIdentifier, msg);
+        this.sendFileMessage(value, uId);
+      } else {
+        this.io.in(uId).emit(enviroment.messageIdentifier, value);
+      }
     });
     this.sendServerMessage(uName + " joined", uId, true); //send servermessage to inform everyone that a new user joined
     clearTimeout(this.destroyTimeout); //clears timeout to stop destroying server

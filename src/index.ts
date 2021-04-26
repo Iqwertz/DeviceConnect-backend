@@ -93,6 +93,10 @@ app.post("/new", (req, res) => {
       sessionEnviroment.receiveChunk(msg);
     });
 
+    socket.on("chunkResponse", (res) => {
+      sessionEnviroment.chunkResponse(res);
+    });
+
     socket.on("disconnect", () => {
       //when user disconnects call disconnectUser
       sessionEnviroment.disconnectUser(socket.id);
