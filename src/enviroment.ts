@@ -5,6 +5,7 @@ export const enviroment = {
   maxPictures: 20,
   maxDocuments: 10,
   ssl: true,
+  chunkSize: 100000,
   animalNames: [
     "Ant",
     "Caterpillar",
