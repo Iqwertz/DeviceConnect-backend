@@ -16,6 +16,7 @@ const sessionsStore: Map<string, SessionEnviroment> = new Map<
 >();
 var cors = require("cors");
 const app = express();
+app.use(require("express-status-monitor")());
 let http;
 
 /////PArams for cors errors, This is mostly a mess I am going to clean it up when the server is running and working
