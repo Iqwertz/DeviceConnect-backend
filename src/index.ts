@@ -6,7 +6,6 @@ when the request's credentials mode is 'include'. The credentials mode of reques
 */
 import { SessionEnviroment } from "./session-class";
 import * as express from "express";
-import { createServer } from "http";
 import * as socketio from "socket.io";
 import { enviroment } from "./enviroment";
 
@@ -17,7 +16,7 @@ app.use(require("express-status-monitor")());
 let http;
 
 /////PArams for cors errors, This is mostly a mess I am going to clean it up when the server is running and working
-const whitelist = ["http://localhost:4200", "https://iqwertz.github.io", "http://transfertube.000webhostapp.com"];
+/* const whitelist = ["http://localhost:4200", "https://iqwertz.github.io", "http://transfertube.000webhostapp.com"];
 const corsOptions = {
   credentials: true, // This is important.
   origin: (origin, callback) => {
@@ -25,11 +24,11 @@ const corsOptions = {
     if (whitelist.includes(origin)) return callback(null, true);
     callback(new Error("Not allowed by CORS"));
   },
-};
+}; */
 
 http = require("http").Server(app);
 
-app.use(cors(corsOptions));
+app.use(cors());
 /*app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });*/
@@ -51,7 +50,6 @@ function getNewSessionId(digits: number) {
 
 app.post("/new", (req, res) => {
   //creates a new session
-  res.header("Access-Control-Allow-Origin", [req.headers.origin]); //cors blabla
 
   const newId = getNewSessionId(4); //generate new Id
 
@@ -107,7 +105,8 @@ let server = http.listen(process.env.PORT || enviroment.port, () => {
   console.log("listening on *:" + enviroment.port);
 });
 
-function getRandomId(digits: number, numbers: boolean, capitalLetter: boolean, letter: boolean): string { //universal function to generate random id
+function getRandomId(digits: number, numbers: boolean, capitalLetter: boolean, letter: boolean): string {
+  //universal function to generate random id
   const nChar = "123456789"; //All: const nChar = "0123456789"; /Removed easy mistaken Id letter
   const cChar = "ABCDEFGHJKLMNPQRSTUVWXYZ"; //All const cChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";  / Removed easy mistaken Id letter
   const lChar = "abcdefghijklmnopqrstuvwxyz";
