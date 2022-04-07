@@ -10,21 +10,14 @@ import { createServer } from "http";
 import * as socketio from "socket.io";
 import { enviroment } from "./enviroment";
 
-const sessionsStore: Map<string, SessionEnviroment> = new Map<
-  string,
-  SessionEnviroment
->();
+const sessionsStore: Map<string, SessionEnviroment> = new Map<string, SessionEnviroment>();
 var cors = require("cors");
 const app = express();
 app.use(require("express-status-monitor")());
 let http;
 
 /////PArams for cors errors, This is mostly a mess I am going to clean it up when the server is running and working
-const whitelist = [
-  "http://localhost:4200",
-  "https://iqwertz.github.io",
-  "http://transfertube.000webhostapp.com",
-];
+const whitelist = ["http://localhost:4200", "https://iqwertz.github.io", "http://transfertube.000webhostapp.com"];
 const corsOptions = {
   credentials: true, // This is important.
   origin: (origin, callback) => {
@@ -109,17 +102,12 @@ app.get("/session/:id", (req, res) => {
   }
 });
 
-let server = http.listen(enviroment.port, () => {
+let server = http.listen(process.env.PORT || enviroment.port, () => {
   //listen to port
   console.log("listening on *:" + enviroment.port);
 });
 
-function getRandomId( //universal function to generate random id
-  digits: number,
-  numbers: boolean,
-  capitalLetter: boolean,
-  letter: boolean
-): string {
+function getRandomId(digits: number, numbers: boolean, capitalLetter: boolean, letter: boolean): string { //universal function to generate random id
   const nChar = "123456789"; //All: const nChar = "0123456789"; /Removed easy mistaken Id letter
   const cChar = "ABCDEFGHJKLMNPQRSTUVWXYZ"; //All const cChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";  / Removed easy mistaken Id letter
   const lChar = "abcdefghijklmnopqrstuvwxyz";
