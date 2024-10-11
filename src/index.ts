@@ -28,7 +28,12 @@ const corsOptions = {
 
 http = require("http").Server(app);
 
-app.use(cors());
+const corsOptions = {
+  origin: true, //Fuck cors
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 /*app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
 });*/
@@ -48,14 +53,14 @@ function getNewSessionId(digits: number) {
   return generatedId;
 }
 
-app.post("/new", (req, res) => {
+app.post(enviroment.basePath + "/new", (req, res) => {
   //creates a new session
 
   const newId = getNewSessionId(4); //generate new Id
 
   let io = socketio(server, {
     //create socket
-    path: `/${newId}`,
+    path: enviroment.basePath + `/${newId}`,
   });
 
   const sessionEnviroment: SessionEnviroment = new SessionEnviroment(newId, io); //create new SessionEnviroment
@@ -90,7 +95,7 @@ app.post("/new", (req, res) => {
   res.json({ sessionId: newId }); //send the session is as respons back
 });
 
-app.get("/session/:id", (req, res) => {
+app.get(enviroment.basePath + "/session/:id", (req, res) => {
   //checks if session exists in session store and returns a html statu
   if (sessionsStore.has(req.params.id)) {
     console.log("200");
