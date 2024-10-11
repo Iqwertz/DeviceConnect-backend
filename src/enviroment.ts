@@ -4,6 +4,7 @@ export const enviroment = {
   destroySessionDelay: 300000,
   maxPictures: 20,
   maxDocuments: 10,
+  basePath: "/DeviceConnect",
   ssl: true,
   animalNames: [
     "Ant",
